@@ -1,26 +1,20 @@
-// sign_up_screen.dart (FINAL - TRUSTING BLE_CONTROLLER TIMEOUT)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../services/ble_controller.dart';
 import '../models/user_profile.dart';
-import 'registration_screen.dart'; // MedicalProfileScreen
+import 'registration_screen.dart';
 import 'dart:async';
 
-// Custom Colors
-// 🚨 لون إطار حقل الإدخال (برتقالي مطفأ)
 const Color inputFieldBorderColor = Color(0xFFB26740);
-const Color darkBodyBackground = Color(0xFF1B1B1B); // اللون الأغمق في الخلفية (نص زر Next)
-const Color onBackground = Colors.white; // لون النص الأبيض
-// 🚨 لون زر Next (برتقالي ساطع)
+const Color darkBodyBackground = Color(0xFF1B1B1B);
+const Color onBackground = Colors.white;
 const Color nextButtonColor = Color(0xFFFFB267);
 
-// 🚨 ألوان التدرج اللوني للخلفية - طبقاً لـ Figma
 const Color gradientTopColor = Color(0xFF2D2929);
 const Color gradientBottomColor = Color(0xFF110F0F);
 
-// Registration Field Enumeration
 enum RegistrationField {
   fullName,
   email,
@@ -36,16 +30,13 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  // Controllers for text input
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // State management
   RegistrationField _currentField = RegistrationField.fullName;
   String _currentLabel = 'Full Name';
 
-  // Interaction State
   bool _isAwaitingInput = false;
   bool _isLoading = false;
   late BleController _bleController;
@@ -56,7 +47,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     _bleController = Provider.of<BleController>(context, listen: false);
 
-    // 🚨 التعديل لإصلاح مشكلة TTS: استخدام PostFrameCallback لضمان تهيئة الـ context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _speakCurrentInstruction();
     });
@@ -70,10 +60,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  // Helper to check if any interaction is ongoing
   bool get isInteractionDisabled => _isLoading || _bleController.isListening;
 
-  // TTS Instruction Logic
   void _speakCurrentInstruction() {
     String instruction;
     switch (_currentField) {
@@ -93,7 +81,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _bleController.speak(instruction);
   }
 
-  // Voice Command Handling
   void _onLongPressStart() {
     if (_isAwaitingInput || isInteractionDisabled) return;
 
@@ -104,35 +91,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _bleController.speak('Listening...');
     _bleController.startListening(
       onResult: (result) {
-        // ✨ هذا سيتم استدعاؤه بعد انتهاء الاستماع (سواء بالتعرف أو بالـ Timeout)
         _handleVoiceInput(result);
       },
     );
   }
 
-  // ⚠️ تم حذف دالة _onLongPressEnd() بالكامل.
-
   void _handleVoiceInput(String text) {
     if (!mounted) return;
 
-    // ✨ التصحيح الحاسم: إعادة ضبط حالة الانتظار فور استلام النتيجة (حتى لو كانت فارغة)
     setState(() {
       _isAwaitingInput = false;
     });
 
-    // إضافة فحص قوي لاسم المستخدم للتعامل مع النتيجة الفارغة
     if (_currentField == RegistrationField.fullName && text.trim().isEmpty) {
       _bleController.speak("Sorry, I could not hear your full name clearly. Please press and hold again to speak your name.");
-      return; // إبقاء المستخدم في حقل الاسم لإعادة المحاولة
+      return;
     }
 
-    // Handle 'Next' command
     if (text.toLowerCase().contains('next') || text.toLowerCase().contains('التالي')) {
       _navigateToNextField();
       return;
     }
 
-    // Handle data entry based on current field
     switch (_currentField) {
       case RegistrationField.fullName:
         _nameController.text = text;
@@ -151,7 +131,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  // Navigation Logic
   void _navigateToNextField() {
     String? validationError;
 
@@ -178,7 +157,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
         } else {
           _currentField = RegistrationField.complete;
           _currentLabel = 'Password';
-          // لا يتم التنقل تلقائيًا، بل ينتظر ضغطة زر 'Next' أو أمر 'Next' صوتي
         }
         break;
       case RegistrationField.complete:
@@ -194,28 +172,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() {});
   }
 
-  // ⭐️ دالة حفظ وتنقل معدّلة للتعامل مع نتيجة الحفظ وعرض مؤشر التحميل
   void _saveAndNavigateToMedicalProfile() async {
     if (isInteractionDisabled) return;
 
     setState(() {
-      _isLoading = true; // بدء التحميل
+      _isLoading = true;
     });
 
     _bleController.speak("Saving registration details...");
 
-    // إنشاء نموذج المستخدم المؤقت (Temp Profile)
     final tempProfile = UserProfile(
       fullName: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
-      // تعيين الحقول المطلوبة للـ UserProfile بأي قيم افتراضية غير فارغة
       sex: 'Not Set',
       bloodType: 'Not Set',
       allergies: 'None',
       medications: 'None',
       diseases: 'None',
-      // الحقول الاختيارية الأخرى
       age: 0,
       homeAddress: 'Not Set',
       emergencyPhoneNumber: 'Not Set',
@@ -230,30 +204,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
       longPressAction: 'VoiceCommand',
     );
 
-    // التحقق من نجاح عملية الحفظ
     bool saveSuccess = true;
     try {
-      // ⚠️ ملاحظة: تم تعديل دالة saveUserProfile في ble_controller.dart
-      // لتقوم بإلقاء رسالة صوتية مباشرة إذا فشل الحفظ، لذا لا حاجة لـ try-catch مع speak() هنا،
-      // ولكن يتم تركها لالتقاط الأخطاء العامة.
       await _bleController.saveUserProfile(tempProfile);
 
-      // إذا وصلت إلى هنا، يعتبر الحفظ ناجحًا (سواء نجح SharedPreferences أو فشل
-      // وأصدرت رسالة صوتية من داخل المتحكم)
     } catch (e) {
       print("Error during saveUserProfile call: $e");
       saveSuccess = false;
-      _bleController.speak("فشل حفظ الملف الشخصي. الرجاء المحاولة مرة أخرى.");
+      _bleController.speak("Profile save failed. Please try again.");
     } finally {
-      // ضمان إلغاء حالة التحميل (Loading) دائماً
       if (mounted) {
         setState(() {
-          _isLoading = false; // إنهاء التحميل
+          _isLoading = false;
         });
       }
     }
 
-    // التنقل بعد التأكد من انتهاء عملية الحفظ
     if (saveSuccess && mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const MedicalProfileScreen()),
@@ -262,9 +228,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  // --- UI Components ---
-
-  // Widget to build the Input Field
   Widget _buildInputField(
       TextEditingController controller,
       RegistrationField field,
@@ -276,11 +239,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        // 🚨 الخلفية شفافة
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: inputFieldBorderColor, // لون الإطار البرتقالي المطفأ
+          color: inputFieldBorderColor,
           width: 1.0,
         ),
       ),
@@ -296,9 +258,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             labelText: label,
             labelStyle: TextStyle(color: onBackground.withOpacity(0.7)),
             border: InputBorder.none,
-            // ضبط contentPadding و isDense لارتفاع الحقل 48px
             contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20),
-            // إزالة لون التعبئة (Fill Color) للحقل ليصبح شفافاً
             fillColor: Colors.transparent,
             filled: true,
             isDense: false,
@@ -318,7 +278,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // Widget for the overlay when listening or loading
   Widget _buildOverlay(BleController bleController) {
     return Container(
       color: Colors.black.withOpacity(0.8),
@@ -331,7 +290,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 20),
             Text(
               _isLoading
-                  ? 'Saving profile...' // تم تعديل النص ليناسب حالة الحفظ
+                  ? 'Saving profile...'
                   : bleController.isListening
                   ? 'Listening to input...'
                   : 'Processing voice command...',
@@ -351,18 +310,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         return GestureDetector(
           onLongPressStart: (_) => _onLongPressStart(),
-          // ⚠️ تم حذف onLongPressEnd بالكامل لعدم التداخل مع مؤقت المتحكم
           onTap: isListening ? () => _bleController.stopListening() : null,
           child: Scaffold(
-            // جعل الخلفية شفافة للسماح للتدرج بالظهور
             backgroundColor: Colors.transparent,
             body: Container(
-              // تطبيق التدرج اللوني الذي يملأ الشاشة بالكامل
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    gradientTopColor, // #2D2929
-                    gradientBottomColor, // #110F0F
+                    gradientTopColor,
+                    gradientBottomColor,
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -370,10 +326,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               child: Stack(
                 children: [
-                  // محتوى الشاشة
                   Column(
                     children: [
-                      // الـ AppBar (شفافة وتدمج مع الخلفية)
                       AppBar(
                         backgroundColor: Colors.transparent,
                         elevation: 0,
@@ -386,7 +340,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         automaticallyImplyLeading: false,
                       ),
 
-                      // باقي المحتوى
                       Expanded(
                         child: Column(
                           children: [
@@ -396,7 +349,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Form Fields
                                     _buildInputField(
                                       _nameController,
                                       RegistrationField.fullName,
@@ -418,7 +370,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
 
-                            // Next Button
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
                               child: ElevatedButton(
@@ -427,7 +378,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     : () => _navigateToNextField(),
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor: darkBodyBackground,
-                                  backgroundColor: nextButtonColor, // #FFB267
+                                  backgroundColor: nextButtonColor,
                                   side: const BorderSide(
                                     color: nextButtonColor,
                                     width: 1.0,
@@ -458,14 +409,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20), // مسافة إضافية أسفل الزر
+                            const SizedBox(height: 20),
                           ],
                         ),
                       ),
                     ],
                   ),
 
-                  // Voice/Loading Overlay
                   if (_isAwaitingInput || bleController.isListening || _isLoading)
                     Positioned.fill(
                       child: _buildOverlay(bleController),

@@ -1,16 +1,14 @@
-// main.dart (MODIFIED - Start at LocalAuthScreen)
+
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
-// ✨ التعديل: سنعتمد على أن الملف registration_screen.dart أصبح يحتوي على الكلاس MedicalProfileScreen
 import 'screens/registration_screen.dart';
 import 'screens/ble_scan_screen.dart';
 import 'screens/local_auth_screen.dart';
 import 'services/ble_controller.dart';
-import 'screens/main_chat_screen.dart'; // افتراض وجودها
+import 'screens/main_chat_screen.dart';
 
-// نستخدم اسم الكلاس الجديد MedicalProfileScreen (تم نقله هنا مؤقتًا لضمان التشغيل في بيئة Flutter)
 class MedicalProfileScreen extends StatefulWidget {
   const MedicalProfileScreen({super.key});
 
@@ -27,7 +25,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
   }
 }
 
-// ⚠️ Placeholder for MainChatScreen to enable compilation
 class MainChatScreen extends StatelessWidget {
   const MainChatScreen({super.key});
 
@@ -43,7 +40,6 @@ class MainChatScreen extends StatelessWidget {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // لضمان عرض التطبيق بالوضع الرأسي فقط
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -68,11 +64,9 @@ class MyApp extends StatelessWidget {
       title: 'Lumos',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // إعدادات الثيم (يُفضل استخدام نظام الألوان الداكن)
-        scaffoldBackgroundColor: const Color(0xFF141318), // Dark Background
+        scaffoldBackgroundColor: const Color(0xFF141318),
         primaryColor: Colors.cyan,
         textTheme: const TextTheme(
-          // ضبط ألوان النصوص الافتراضية إلى الأبيض
           bodyLarge: TextStyle(color: Colors.white),
           bodyMedium: TextStyle(color: Colors.white),
           titleMedium: TextStyle(color: Colors.white),
@@ -107,11 +101,9 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      // ✅ التعديل: تعيين نقطة البداية دائمًا إلى شاشة LocalAuthScreen
       home: const LocalAuthScreen(),
 
       routes: {
-        // ✨ التعديل: استخدام اسم الكلاس الجديد MedicalProfileScreen
         '/registration': (context) => const MedicalProfileScreen(),
         '/scan': (context) => const BleScanScreen(),
         '/main': (context) => const MainChatScreen(),

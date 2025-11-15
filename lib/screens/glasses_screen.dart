@@ -1,5 +1,3 @@
-// glasses_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/ble_controller.dart';
@@ -7,21 +5,17 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 import 'dart:ui';
 
-// Navigation Imports (MUST be present in the project)
 import 'main_chat_screen.dart';
 import 'bracelet_screen.dart';
 import 'cane_screen.dart';
 import 'gesture_config_screen.dart';
 
-// Custom Colors
-const Color neonColor = Color(0xFFFFB267); // اللون البرتقالي
+const Color neonColor = Color(0xFFFFB267);
 const Color darkSurface = Color(0xFF2D2929);
 const Color cardColor = Color(0xFF282424);
 const Color onBackground = Colors.white;
 
-// **ألوان الخلفية الداكنة الجديدة بناءً على طلبك**
-const Color newDarkBackground = Color(0xFF211D1D); // اللون المطلوب (#211D1D)
-// لون مشتق لتأمين تدرج سلس
+const Color newDarkBackground = Color(0xFF211D1D);
 const Color gradientMidColor = Color(0xFF2A2626);
 
 
@@ -33,7 +27,7 @@ class GlassesScreen extends StatefulWidget {
 }
 
 class _GlassesScreenState extends State<GlassesScreen> {
-  bool _isConnected = true; // الحالة الأولية للمفتاح
+  bool _isConnected = true;
   final String _batteryLevel = '36%';
   final String _timeRemaining = '3h 20m';
 
@@ -181,13 +175,11 @@ class _GlassesScreenState extends State<GlassesScreen> {
           onLongPressEnd: _onLongPressEnd,
           onDoubleTap: () => _handleDoubleTap(bleController),
           child: Scaffold(
-            // **تعيين لون الخلفية الأساسي للبني الداكن الجديد**
             backgroundColor: newDarkBackground,
             body: Stack(
               children: [
-                // 1. الصورة الخلفية للنظارات (في الجزء العلوي)
                 Positioned(
-                  top: -60, // تم رفع الصورة وتصغيرها
+                  top: -60,
                   left: 0,
                   right: 0,
                   height: MediaQuery.of(context).size.height * 0.70,
@@ -202,7 +194,6 @@ class _GlassesScreenState extends State<GlassesScreen> {
                   ),
                 ),
 
-                // 2. التدرج اللوني المموه (Gradient)
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.35,
                   left: 0,
@@ -213,11 +204,10 @@ class _GlassesScreenState extends State<GlassesScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        // **استخدام الألوان الداكنة الجديدة للتدرج**
                         colors: [
-                          newDarkBackground.withOpacity(0.0), // شفاف تماماً
-                          gradientMidColor.withOpacity(0.95), // اللون الداكن المتوسط المشتق
-                          newDarkBackground, // اللون الداكن الجديد
+                          newDarkBackground.withOpacity(0.0),
+                          gradientMidColor.withOpacity(0.95),
+                          newDarkBackground,
                         ],
                         stops: const [0.0, 0.4, 1.0],
                       ),
@@ -225,7 +215,6 @@ class _GlassesScreenState extends State<GlassesScreen> {
                   ),
                 ),
 
-                // 3. Navigation Header (Smart Glasses فقط)
                 Positioned(
                   top: 50,
                   left: 20,
@@ -246,7 +235,6 @@ class _GlassesScreenState extends State<GlassesScreen> {
                   ),
                 ),
 
-                // 4. كارد البطارية والتحكم (Box)
                 Positioned(
                   top: 388.0 - (screenHeight - MediaQuery.of(context).size.height.floor()),
                   left: (MediaQuery.of(context).size.width - 272.0) / 2,
@@ -262,7 +250,6 @@ class _GlassesScreenState extends State<GlassesScreen> {
                       mainAxisSize: MainAxisSize.max,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // البطارية
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -281,14 +268,12 @@ class _GlassesScreenState extends State<GlassesScreen> {
                           ],
                         ),
 
-                        // مفتاح الاتصال
                         Expanded(
                           child: Align(
                             alignment: Alignment.bottomCenter,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // عرض كلمة "On" أو "Off"
                                 Text(
                                   _isConnected ? 'On' : 'Off',
                                   style: const TextStyle(
@@ -301,17 +286,11 @@ class _GlassesScreenState extends State<GlassesScreen> {
                                   value: _isConnected,
                                   onChanged: (val) => _toggleConnection(bleController),
 
-                                  // 🍊 الحالة ON: المسار برتقالي (التصحيح: استخدام activeTrackColor)
                                   activeTrackColor: neonColor,
-                                  // الدائرة سوداء في حالة التشغيل (ON)
                                   activeThumbColor: Colors.black,
 
-                                  // ⚫ الحالة OFF: المسار أسود شفاف
                                   inactiveTrackColor: Colors.black.withOpacity(0.5),
-                                  // الدائرة سوداء في حالة الإيقاف (OFF)
                                   inactiveThumbColor: Colors.black,
-
-                                  // حذف activeColor لأنه قد يتعارض مع activeTrackColor
                                 ),
                               ],
                             ),
@@ -322,7 +301,6 @@ class _GlassesScreenState extends State<GlassesScreen> {
                   ),
                 ),
 
-                // 5. Show Voice Overlay
                 if (_isAwaitingInput || bleController.isListening)
                   chatOverlay,
               ],

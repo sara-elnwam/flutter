@@ -1,30 +1,23 @@
-// cane_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/ble_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
-import 'dart:ui'; // مهم لاستخدام ImageFilter
+import 'dart:ui';
 
-// Navigation Imports
 import 'main_chat_screen.dart';
 import 'glasses_screen.dart';
 import 'bracelet_screen.dart';
 import 'gesture_config_screen.dart';
 import 'earpods_screen.dart';
 
-// ⚠️ الألوان بناءً على طلبك
-const Color neonColor = Color(0xFFFFB267); // لون المفتاح البرتقالي
-const Color darkSurface = Color(0xFF242020); // لون سطح البطاقة الداكن
-const Color darkBackground = Color(0xFF141318); // لون الخلفية الداكن
+const Color neonColor = Color(0xFFFFB267);
+const Color darkSurface = Color(0xFF242020);
+const Color darkBackground = Color(0xFF141318);
 
-// ✅ لون النص العام: #CCCCCC
 const Color generalTextColor = Color(0xFFCCCCCC);
-// ✅ لون البطارية وعنوان "Smart Cane": #FFFFFF (أبيض نقي)
 const Color batteryPercentageColor = Color(0xFFFFFFFF);
 
-// *** ويدجت مخصص للمفتاح البرتقالي ***
 class CustomOrangeSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -52,7 +45,6 @@ class CustomOrangeSwitch extends StatelessWidget {
         ),
         child: Stack(
           children: <Widget>[
-            // زر التبديل (Thumb)
             AnimatedAlign(
               duration: const Duration(milliseconds: 250),
               alignment: value ? Alignment.centerRight : Alignment.centerLeft,
@@ -63,7 +55,7 @@ class CustomOrangeSwitch extends StatelessWidget {
                   height: 20.0,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.black, // أسود
+                    color: Colors.black,
                   ),
                 ),
               ),
@@ -74,8 +66,6 @@ class CustomOrangeSwitch extends StatelessWidget {
     );
   }
 }
-// *** نهاية ويدجت المفتاح المخصص ***
-
 
 class CaneScreen extends StatefulWidget {
   const CaneScreen({super.key});
@@ -85,7 +75,6 @@ class CaneScreen extends StatefulWidget {
 }
 
 class _CaneScreenState extends State<CaneScreen> {
-  // الحالة التي تتحكم في زر التشغيل/الإيقاف
   bool _isDeviceOn = true;
   bool _isAwaitingInput = false;
   String _lastSpokenPrompt = '';
@@ -154,26 +143,25 @@ class _CaneScreenState extends State<CaneScreen> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => screen));
     }
 
-    if (normalizedCommand.contains('glasses') || normalizedCommand.contains('نظاره')) {
+    if (normalizedCommand.contains('glasses')) {
       navigateTo(const GlassesScreen(), 'Glasses');
       return;
-    } else if (normalizedCommand.contains('cane') || normalizedCommand.contains('عصا')) {
+    } else if (normalizedCommand.contains('cane')) {
       bleController.speak('You are already on the Cane screen.');
       return;
-    } else if (normalizedCommand.contains('bracelet') || normalizedCommand.contains('سوار')) {
+    } else if (normalizedCommand.contains('bracelet')) {
       navigateTo(const BraceletScreen(), 'Bracelet');
       return;
-    } else if (normalizedCommand.contains('home') || normalizedCommand.contains('رئيسية') || normalizedCommand.contains('main')) {
+    } else if (normalizedCommand.contains('home') || normalizedCommand.contains('main')) {
       bleController.speak('Returning to Home screen.');
       Navigator.of(context).pop();
       return;
     }
-    // Special Commands:
-    else if (normalizedCommand.contains('settings') || normalizedCommand.contains('اعدادات')) {
+    else if (normalizedCommand.contains('settings')) {
       bleController.speak('Navigating to Settings screen.');
       _goToSettings();
       return;
-    } else if (normalizedCommand.contains('emergency') || normalizedCommand.contains('طوارئ') || normalizedCommand.contains('911')) {
+    } else if (normalizedCommand.contains('emergency') || normalizedCommand.contains('911')) {
       bleController.speak('Initiating emergency call.');
       _triggerEmergencyCall(bleController);
       return;
@@ -198,18 +186,16 @@ class _CaneScreenState extends State<CaneScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // *** تعريف نمط الخط الجديد لـ "Estimated time remaining" ***
     const TextStyle estimatedTimeStyle = TextStyle(
-      color: generalTextColor, // #CCCCCC
+      color: generalTextColor,
       fontSize: 14,
-      fontWeight: FontWeight.w700, // ✅ تم زيادة الوزن إلى Bold
+      fontWeight: FontWeight.w700,
       fontFamily: 'Manrope',
       letterSpacing: 14 * 0.01,
     );
 
     return Consumer<BleController>(
       builder: (context, bleController, child) {
-        // **Chat Overlay UI**
         final chatOverlay = Container(
           color: Colors.black.withOpacity(0.8),
           constraints: const BoxConstraints.expand(),
@@ -224,9 +210,9 @@ class _CaneScreenState extends State<CaneScreen> {
                       ? 'Listening... (Lift finger to send)'
                       : 'Processing your query...',
                   style: const TextStyle(
-                    color: generalTextColor, // #CCCCCC
+                    color: generalTextColor,
                     fontSize: 18,
-                    fontWeight: FontWeight.w700, // ✅ تم زيادة الوزن إلى Bold
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -242,7 +228,6 @@ class _CaneScreenState extends State<CaneScreen> {
             backgroundColor: darkBackground,
             body: Stack(
               children: [
-                // 1. Background Image (صورة العصا) - تغطي كامل الشاشة
                 Positioned.fill(
                   child: Container(
                     decoration: const BoxDecoration(
@@ -255,7 +240,6 @@ class _CaneScreenState extends State<CaneScreen> {
                   ),
                 ),
 
-                // 2. تدرج خفيف (Soft Gradient Overlay) لتوحيد اللون قليلاً
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -272,7 +256,6 @@ class _CaneScreenState extends State<CaneScreen> {
                   ),
                 ),
 
-                // 3. Navigation Header
                 Positioned(
                   top: 50,
                   left: 20,
@@ -282,26 +265,25 @@ class _CaneScreenState extends State<CaneScreen> {
                     children: [
                       InkWell(
                         onTap: () => Navigator.of(context).pop(),
-                        child: const Icon(Icons.arrow_back_ios, color: generalTextColor, size: 24), // #CCCCCC
+                        child: const Icon(Icons.arrow_back_ios, color: generalTextColor, size: 24),
                       ),
                       const Text(
                         'Smart Cane',
                         style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.w700, // ✅ تم زيادة الوزن إلى Bold
+                            fontWeight: FontWeight.w700,
                             fontFamily: 'Manrope',
-                            color: batteryPercentageColor), // ✅ تم التغيير إلى الأبيض النقي
+                            color: batteryPercentageColor),
                       ),
                       IconButton(
                         icon: const Icon(Icons.notifications_none,
-                            color: generalTextColor, size: 24), // #CCCCCC
-                        onPressed: () { /* Handle notification tap */ },
+                            color: generalTextColor, size: 24),
+                        onPressed: () {  },
                       ),
                     ],
                   ),
                 ),
 
-                // 4. البطارية وحالة التشغيل - تم تطبيق تأثير Glassmorphism وخصائص الخط
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.15,
                   right: 20.0,
@@ -316,7 +298,7 @@ class _CaneScreenState extends State<CaneScreen> {
                           color: darkSurface.withOpacity(0.4),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: generalTextColor.withOpacity(0.15), // #CCCCCC بـ Opacity 15%
+                            color: generalTextColor.withOpacity(0.15),
                             width: 1.5,
                           ),
                         ),
@@ -327,17 +309,16 @@ class _CaneScreenState extends State<CaneScreen> {
                             const Text(
                               '36%',
                               style: TextStyle(
-                                color: batteryPercentageColor, // ✅ أبيض نقي
+                                color: batteryPercentageColor,
                                 fontSize: 38,
-                                fontWeight: FontWeight.w800, // وزن أثقل (ExtraBold)
+                                fontWeight: FontWeight.w800,
                                 fontFamily: 'Manrope',
                               ),
                             ),
                             const SizedBox(height: 5),
-                            // *** Estimated time remaining ***
                             const Text(
                               'Estimated time remaining: 3h 20m',
-                              style: estimatedTimeStyle, // مطبق عليه سمك Bold و #CCCCCC
+                              style: estimatedTimeStyle,
                             ),
                             const SizedBox(height: 25),
                             Row(
@@ -346,9 +327,9 @@ class _CaneScreenState extends State<CaneScreen> {
                                 Text(
                                   _isDeviceOn ? 'On' : 'Off',
                                   style: const TextStyle(
-                                    color: generalTextColor, // #CCCCCC
+                                    color: generalTextColor,
                                     fontSize: 20,
-                                    fontWeight: FontWeight.w700, // ✅ تم زيادة الوزن إلى Bold
+                                    fontWeight: FontWeight.w700,
                                     fontFamily: 'Manrope',
                                   ),
                                 ),
@@ -365,8 +346,6 @@ class _CaneScreenState extends State<CaneScreen> {
                   ),
                 ),
 
-
-                // 5. Show Voice Overlay
                 if (_isAwaitingInput || bleController.isListening)
                   chatOverlay,
               ],

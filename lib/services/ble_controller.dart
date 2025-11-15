@@ -1,4 +1,3 @@
-// lib/services/ble_controller.dart - الكود المعدّل والنهائي
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -9,42 +8,30 @@ import 'package:flutter/foundation.dart' show kIsWeb, listEquals, kDebugMode;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ تم استيرادها
+import 'package:shared_preferences/shared_preferences.dart';
 
-// استيراد النماذج والتعدادات
 import '../models/user_profile.dart';
 import '../enums/action_type.dart';
 
-// -----------------------------------------------------------------
-// 1. الثوابت الرئيسية (BLE)
-// -----------------------------------------------------------------
 const String SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const String DATA_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const String CONFIG_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a7";
 
 const String USER_PROFILE_KEY = 'user_profile_data';
 
-// -----------------------------------------------------------------
-// 2. BleController (المنطق الكامل والمعدّل)
-// -----------------------------------------------------------------
-
 class BleController with ChangeNotifier {
-  // TTS و STT والـ Gemini
   final FlutterTts _flutterTts = FlutterTts();
   final SpeechToText _speechToText = SpeechToText();
   bool _isListening = false;
   String _lastWords = '';
   bool _speechToTextInitialized = false;
   late final GenerativeModel _model;
-  // NOTE: يجب تغيير هذا المفتاح إلى مفتاح صالح للاستخدام
   final String _geminiApiKey = 'AIzaSyBwOMGLGl6GJsKkgvyT2Mz57vmdNWhOZJI';
 
-  // حالة الـ STT Timeout
   Timer? _sttTimeoutTimer;
   final Duration _maxListeningDuration = const Duration(seconds: 7);
 
-  // ملف المستخدم
-  late SharedPreferences _prefs; // ✅ يجب تهيئتها في initializeController
+  late SharedPreferences _prefs;
   UserProfile? _userProfile;
   UserProfile? get userProfile => _userProfile;
   double get speechRate => _userProfile?.speechRate ?? 0.5;
@@ -56,7 +43,6 @@ class BleController with ChangeNotifier {
     notifyListeners();
   }
 
-  // إعدادات الإيماءات (يتم إرسالها إلى الجهاز)
   Map<String, ActionType> _gestureConfig = {
     'shakeTwiceAction': ActionType.sos_emergency,
     'tapThreeTimesAction': ActionType.call_contact,
@@ -64,12 +50,11 @@ class BleController with ChangeNotifier {
   };
   Map<String, ActionType> get gestureConfig => _gestureConfig;
 
-  // حالة الـ BLE
   final List<ScanResult> scanResults = [];
   BluetoothDevice? connectedDevice;
   bool _isScanning = false;
   bool _isConnecting = false;
-  String _receivedDataMessage = 'لا توجد بيانات مستلمة بعد.';
+  String _receivedDataMessage = 'No data received yet.';
   StreamSubscription<List<int>>? _dataSubscription;
 
   bool get isListening => _isListening;
@@ -78,10 +63,6 @@ class BleController with ChangeNotifier {
   bool get isConnecting => _isConnecting;
   String get receivedDataMessage => _receivedDataMessage;
   bool get isConnected => connectedDevice != null;
-
-  // -----------------------------------------------------------------
-  // التهيئة
-  // -----------------------------------------------------------------
 
   BleController() {
     if (_geminiApiKey.isNotEmpty && _geminiApiKey != 'YOUR_GEMINI_API_KEY') {
@@ -92,24 +73,18 @@ class BleController with ChangeNotifier {
       if (kDebugMode) print("✅ Gemini Model Initialized.");
     } else {
       if (kDebugMode) print("❌ Gemini API Key is missing or invalid.");
-      // تهيئة نموذج وهمي لتجنب الانهيار
       _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: 'DUMMY_KEY');
     }
   }
 
   Future<void> initializeController() async {
-    _prefs = await SharedPreferences.getInstance(); // ✅ تهيئة Shared Preferences
-    await _loadUserProfile(); // ✅ تحميل الملف الشخصي
+    _prefs = await SharedPreferences.getInstance();
+    await _loadUserProfile();
     await _configureTtsSettings();
     await initSpeech();
     notifyListeners();
   }
 
-  // -----------------------------------------------------------------
-  // إدارة ملف المستخدم (SharedPreferences) - ✅ الجزء المعدّل
-  // -----------------------------------------------------------------
-
-  // ✅ دالة تحميل الملف الشخصي
   Future<void> _loadUserProfile() async {
     final String? jsonString = _prefs.getString(USER_PROFILE_KEY);
     if (jsonString != null && jsonString.isNotEmpty) {
@@ -119,48 +94,39 @@ class BleController with ChangeNotifier {
         if (kDebugMode) print("UserProfile loaded successfully.");
       } catch (e) {
         if (kDebugMode) print("Error loading UserProfile: $e");
-        _userProfile = UserProfile.initial; // استخدام الملف الأولي في حالة الخطأ
+        _userProfile = UserProfile.initial;
       }
     } else {
-      // استخدام UserProfile.initial لتوفير بيانات تسجيل دخول افتراضية فارغة
       _userProfile = UserProfile.initial;
       if (kDebugMode) print("No UserProfile found in storage. Using initial.");
     }
   }
 
-  // ✅ دالة حفظ الملف الشخصي (تم تعديلها لتصدر رسالة صوتية عند الفشل)
   Future<bool> saveUserProfile(UserProfile profile) async {
     try {
       final jsonString = jsonEncode(profile.toJson());
       await _prefs.setString(USER_PROFILE_KEY, jsonString);
 
-      // تحديث الحالة الداخلية
       _userProfile = profile;
       await _configureTtsSettings();
       notifyListeners();
 
       if (kDebugMode) print("UserProfile saved and TTS settings updated successfully: ${profile.fullName}");
-      return true; // نجاح الحفظ
+      return true;
     } catch (e) {
       if (kDebugMode) print("CRITICAL ERROR: Failed to save user profile: $e");
-      // إصدار رسالة صوتية للمستخدم عند الفشل
-      await speak("فشل حفظ الملف الشخصي. الرجاء المحاولة مرة أخرى.");
-      return false; // فشل الحفظ
+      await speak("Profile save failed. Please try again.");
+      return false;
     }
   }
 
 
-  // دالة لمسح ملف المستخدم (تسجيل الخروج)
   Future<void> clearUserProfile() async {
     _userProfile = UserProfile.initial;
     await _prefs.remove(USER_PROFILE_KEY);
     notifyListeners();
     if (kDebugMode) print("User profile cleared (Logout).");
   }
-
-  // -----------------------------------------------------------------
-  // إعدادات TTS
-  // -----------------------------------------------------------------
 
   Future<void> _configureTtsSettings() async {
     await _flutterTts.setSpeechRate(speechRate);
@@ -174,11 +140,9 @@ class BleController with ChangeNotifier {
     }
   }
 
-  // تحديث إعدادات TTS وحفظها في الملف الشخصي
   Future<void> updateTtsSettings({double? rate, double? vol, String? locale}) async {
     if (_userProfile == null) return;
 
-    // استخدام copyWith لتحديث الحقول الفردية مع الاحتفاظ بالباقي
     final updatedProfile = _userProfile!.copyWith(
       speechRate: rate,
       volume: vol,
@@ -188,19 +152,14 @@ class BleController with ChangeNotifier {
     await saveUserProfile(updatedProfile);
   }
 
-  // -----------------------------------------------------------------
-  // دوال TTS (النطق)
-  // -----------------------------------------------------------------
-
   Future<void> speak(String text) async {
     if (_speechToText.isListening) {
       await _speechToText.stop();
       _isListening = false;
     }
 
-    // إعداد معالج الإكمال قبل النطق
     _flutterTts.setCompletionHandler(() {
-      notifyListeners(); // لتحديث حالة speaking إذا أردنا تتبعها
+      notifyListeners();
     });
 
     await _flutterTts.stop();
@@ -212,28 +171,21 @@ class BleController with ChangeNotifier {
     await _flutterTts.stop();
   }
 
-  // دالة مساعدة لإنشاء وإلقاء رسالة تأكيد الاسم (للاستخدام في شاشة التسجيل)
   Future<void> confirmNamePrompt(String name) async {
-    // بناء رسالة التوجيه المطلوبة من المستخدم
     final message = '''
-      الاسم الذي تم التقاطه هو: $name. 
-      إذا كان صحيحاً، يرجى الضغط مرتين (Double Tap) للانتقال إلى الحقل التالي. 
-      وإذا كان خاطئاً، يرجى الضغط ثلاث مرات (Triple Tap) لإعادة تسجيل الاسم.
+      The name captured is: $name. 
+      If correct, please Double Tap to proceed to the next field. 
+      If incorrect, please Triple Tap to re-record the name.
       ''';
     await speak(message);
   }
 
-  // -----------------------------------------------------------------
-  // دوال STT (التعرف على الكلام) - لم يتم تعديلها بناء على طلبك
-  // -----------------------------------------------------------------
-
   Future<bool> initSpeech() async {
     if (_speechToTextInitialized) return true;
 
-    // 1. طلب إذن الميكروفون
     final status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
-      await speak("الرجاء منح إذن الميكروفون لاستخدام المساعد الصوتي.");
+      await speak("Please grant microphone permission to use the voice assistant.");
       return false;
     }
 
@@ -245,19 +197,16 @@ class BleController with ChangeNotifier {
         if (kDebugMode) print('✅ SpeechToText Initialized.');
       } else {
         if (kDebugMode) print('❌ SpeechToText failed to initialize.');
-        await speak('عذراً، لا يمكن تهيئة خاصية التعرف الصوتي على هذا الجهاز.');
+        await speak('Sorry, voice recognition cannot be initialized on this device.');
       }
-      return _speechToTextInitialized; // إرجاع الحالة النهائية
+      return _speechToTextInitialized;
     } catch (e) {
       if (kDebugMode) print("Error initializing STT: $e");
       return false;
     }
   }
 
-  // دالة لبدء الاستماع وإعادة النتيجة إلى الواجهة
-  // تم إزالة الربط التلقائي بـ Gemini هنا
   void startListening({required Function(String) onResult}) async {
-    // التأكد من التهيئة قبل البدء
     if (!_speechToTextInitialized) {
       final initialized = await initSpeech();
       if (!initialized) return;
@@ -269,12 +218,10 @@ class BleController with ChangeNotifier {
     _lastWords = '';
     notifyListeners();
 
-    // 1. بدء المؤقت (Timeout Timer)
     _sttTimeoutTimer?.cancel();
     _sttTimeoutTimer = Timer(_maxListeningDuration, () {
       if (kDebugMode) print('STT Timeout: Forcing result resolution after 7 seconds.');
       stopListening(shouldSpeakStop: false);
-      // إرسال النتيجة إلى الواجهة (حتى لو كانت فارغة بسبب Timeout)
       onResult(_lastWords);
     });
 
@@ -284,10 +231,8 @@ class BleController with ChangeNotifier {
           _lastWords = result.recognizedWords;
           notifyListeners();
           if (result.finalResult) {
-            // 2. إلغاء المؤقت عند الحصول على نتيجة
             _sttTimeoutTimer?.cancel();
             stopListening(shouldSpeakStop: false);
-            // إرسال النتيجة النهائية إلى الواجهة (للتطبيق أو للتحقق)
             onResult(_lastWords);
           }
         },
@@ -297,13 +242,11 @@ class BleController with ChangeNotifier {
       if (kDebugMode) print("Error during listening: $e");
       _sttTimeoutTimer?.cancel();
       stopListening(shouldSpeakStop: false);
-      // إرسال نتيجة فارغة في حالة حدوث خطأ
       onResult('');
     }
   }
 
   void stopListening({bool shouldSpeakStop = true}) {
-    // 3. إلغاء المؤقت عند الإيقاف اليدوي أو عن طريق النتيجة
     _sttTimeoutTimer?.cancel();
 
     if (_speechToText.isListening) {
@@ -316,38 +259,28 @@ class BleController with ChangeNotifier {
     }
   }
 
-  // -----------------------------------------------------------------
-  // دوال Gemini API - أصبحت تُستدعى يدوياً من الواجهة عند الحاجة
-  // -----------------------------------------------------------------
-
   Future<void> getGeminiResponse(String prompt) async {
     if (_geminiApiKey.isEmpty || _geminiApiKey == 'YOUR_GEMINI_API_KEY') {
-      await speak('عفواً، خدمة المساعد الذكي غير متاحة. يرجى تزويد مفتاح API صالح.');
+      await speak('Sorry, the smart assistant service is not available. Please provide a valid API key.');
       return;
     }
 
-    // نطق رسالة إيجابية قبل الاتصال بـ API
-    await speak('حسناً، جاري معالجة طلبك: $prompt');
+    await speak('Okay, processing your request: $prompt');
 
     try {
       final response = await _model.generateContent([
         Content.text(prompt)
       ]);
-      final geminiText = response.text ?? 'عذراً، لم أتلق رداً واضحاً من المساعد الذكي.';
+      final geminiText = response.text ?? 'Sorry, I did not receive a clear response from the smart assistant.';
       await speak(geminiText);
     } catch (e) {
       if (kDebugMode) print("Gemini API Error: $e");
-      await speak('حدث خطأ أثناء التواصل مع المساعد الذكي. الرجاء التأكد من اتصال الإنترنت.');
+      await speak('An error occurred while communicating with the smart assistant. Please check your internet connection.');
     }
   }
 
 
-  // -----------------------------------------------------------------
-  // دوال BLE
-  // -----------------------------------------------------------------
-
   Future<void> startScan() async {
-    // طلب الأذونات الضرورية
     if (!kIsWeb) {
       Map<Permission, PermissionStatus> statuses = await [
         Permission.location,
@@ -356,18 +289,18 @@ class BleController with ChangeNotifier {
       ].request();
 
       if (statuses.values.any((s) => s != PermissionStatus.granted)) {
-        await speak("الرجاء منح أذونات الموقع والبلوتوث لبدء البحث عن الأجهزة.");
+        await speak("Please grant location and Bluetooth permissions to start scanning for devices.");
         return;
       }
     }
 
     if (!await FlutterBluePlus.isSupported) {
-      await speak("هذا الجهاز لا يدعم تقنية البلوتوث.");
+      await speak("This device does not support Bluetooth technology.");
       return;
     }
 
     if (await FlutterBluePlus.adapterState.first != BluetoothAdapterState.on) {
-      await speak("الرجاء تفعيل البلوتوث للمتابعة.");
+      await speak("Please enable Bluetooth to continue.");
       return;
     }
 
@@ -376,7 +309,7 @@ class BleController with ChangeNotifier {
     _isScanning = true;
     scanResults.clear();
     notifyListeners();
-    await speak("جاري البحث عن أجهزة ذكية في النطاق...");
+    await speak("Scanning for smart devices in range...");
 
     try {
       await FlutterBluePlus.startScan(
@@ -398,15 +331,15 @@ class BleController with ChangeNotifier {
           _isScanning = false;
           notifyListeners();
           if (scanResults.isEmpty) {
-            speak("لم يتم العثور على أي أجهزة ذكية في النطاق.");
+            speak("No smart devices found in range.");
           } else {
-            speak("تم العثور على ${scanResults.length} جهاز.");
+            speak("Found ${scanResults.length} devices.");
           }
         }
       });
     } catch (e) {
       if (kDebugMode) print("Scan error: $e");
-      await speak("حدث خطأ أثناء مسح أجهزة البلوتوث.");
+      await speak("An error occurred while scanning for Bluetooth devices.");
       _isScanning = false;
       notifyListeners();
     }
@@ -424,7 +357,7 @@ class BleController with ChangeNotifier {
 
     _isConnecting = true;
     notifyListeners();
-    await speak("جاري محاولة الاتصال بالجهاز: ${device.platformName}");
+    await speak("Attempting to connect to device: ${device.platformName}");
 
     try {
       await device.connect(timeout: const Duration(seconds: 15));
@@ -432,14 +365,14 @@ class BleController with ChangeNotifier {
       connectedDevice = device;
       _isConnecting = false;
       notifyListeners();
-      await speak("تم الاتصال بالجهاز بنجاح. النظام جاهز للعمل.");
+      await speak("Successfully connected to the device. The system is ready.");
       if (kDebugMode) print("Connected to device: ${device.remoteId}");
 
       await _subscribeToDataCharacteristic(device);
 
     } on FlutterBluePlusException catch (e) {
       if (kDebugMode) print("Connection failed: $e");
-      await speak("فشل الاتصال بالجهاز. الرجاء المحاولة مرة أخرى.");
+      await speak("Connection to the device failed. Please try again.");
       _isConnecting = false;
       connectedDevice = null;
       notifyListeners();
@@ -451,9 +384,9 @@ class BleController with ChangeNotifier {
       await _dataSubscription?.cancel();
       await connectedDevice!.disconnect();
       connectedDevice = null;
-      _receivedDataMessage = 'لا توجد بيانات مستلمة بعد.';
+      _receivedDataMessage = 'No data received yet.';
       notifyListeners();
-      await speak("تم قطع الاتصال بالجهاز بنجاح.");
+      await speak("Disconnected from the device successfully.");
       if (kDebugMode) print("Disconnected.");
     }
   }
@@ -473,7 +406,7 @@ class BleController with ChangeNotifier {
       if (kDebugMode) print('Subscribed to data characteristic.');
     } else {
       if (kDebugMode) print('Data characteristic not found!');
-      await speak('عذراً، لم يتم العثور على قناة البيانات الرئيسية.');
+      await speak('Sorry, the main data channel was not found.');
     }
   }
 
@@ -487,7 +420,6 @@ class BleController with ChangeNotifier {
     notifyListeners();
   }
 
-  // محاكاة استقبال البيانات (لشاشة ble_scan_screen)
   Future<void> sendMockData(String command) async {
     if (command.isNotEmpty) {
       _handleReceivedData(command);
@@ -499,7 +431,7 @@ class BleController with ChangeNotifier {
     notifyListeners();
 
     if (connectedDevice == null) {
-      await speak("الرجاء الاتصال بالجهاز الذكي أولاً لحفظ الإعدادات.");
+      await speak("Please connect to the smart device first to save the settings.");
       return;
     }
 
@@ -508,39 +440,38 @@ class BleController with ChangeNotifier {
 
     if (characteristic != null) {
       try {
-        // تحويل مفاتيح التعداد إلى سلاسل نصية عند الإرسال
         final jsonString = jsonEncode(config.map((key, value) =>
             MapEntry(key, value.toString().split('.').last)));
 
         await characteristic.write(utf8.encode(jsonString), withoutResponse: true);
-        await speak("تم إرسال إعدادات الإيماءات بنجاح إلى الجهاز.");
+        await speak("Gesture settings successfully sent to the device.");
         if (kDebugMode) print("Sent config: $jsonString");
 
       } catch (e) {
-        await speak("فشل إرسال الإعدادات إلى الجهاز.");
+        await speak("Failed to send settings to the device.");
         if (kDebugMode) print("Failed to write characteristic: $e");
       }
     } else {
-      await speak("عذراً، لم يتم العثور على قناة إرسال الإعدادات.");
+      await speak("Sorry, the settings transmission channel was not found.");
     }
   }
 
   String _mapCommandToMessage(String command) {
     switch (command.toUpperCase()) {
       case 'OBSTACLE_FRONT':
-        return 'عائق أمامي! توقف!';
+        return 'Obstacle ahead! Stop!';
       case 'OBSTACLE_LEFT':
-        return 'عائق على اليسار. كن حذراً.';
+        return 'Obstacle on the left. Be careful.';
       case 'GESTURE_SOS':
-        return 'تم تفعيل إيماءة الاستغاثة. جاري إرسال نداء SOS.';
+        return 'SOS gesture activated. Sending SOS call.';
       case 'GESTURE_CALL':
-        return 'تم تفعيل إيماءة الاتصال. جاري الاتصال برقم الطوارئ.';
+        return 'Call gesture activated. Calling emergency number.';
       case 'BATTERY_LOW':
-        return 'البطارية منخفضة. يرجى الشحن قريباً.';
+        return 'Battery low. Please charge soon.';
       case 'SETTINGS_ACK':
-        return 'تم تأكيد الإعدادات بنجاح.';
+        return 'Settings successfully confirmed.';
       default:
-        return 'تم استلام أمر غير معروف: $command.';
+        return 'Unknown command received: $command.';
     }
   }
 
@@ -566,18 +497,12 @@ class BleController with ChangeNotifier {
     return null;
   }
 
-  // -----------------------------------------------------------------
-  // التخلص من الموارد
-  // -----------------------------------------------------------------
-
   @override
   void dispose() {
     _sttTimeoutTimer?.cancel();
     _speechToText.stop();
     _flutterTts.stop();
     _dataSubscription?.cancel();
-    // تجنب قطع الاتصال هنا لأنه قد يتم استخدام المتحكم في شاشات أخرى، ولكن يمكن تركه اختيارياً
-    // connectedDevice?.disconnect();
     super.dispose();
   }
 }

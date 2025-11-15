@@ -1,12 +1,9 @@
-// lib/screens/medications_detail_screen.dart (الكود الصحيح)
-
 import 'package:flutter/material.dart';
 
-// يمكننا إعادة استخدام الألوان من شاشات أخرى لتجنب خطأ التجميع
-const Color accentColor = Color(0xFFFFB267); // Bright Orange/Accent
-const Color darkBackground = Color(0xFF1B1B1B); // Dark Background
-const Color inputSurfaceColor = Color(0x992B2B2B); // Field background
-const Color onBackground = Color(0xFFF8F8F8); // White text
+const Color accentColor = Color(0xFFFFB267);
+const Color darkBackground = Color(0xFF1B1B1B);
+const Color inputSurfaceColor = Color(0x992B2B2B);
+const Color onBackground = Color(0xFFF8F8F8);
 
 class MedicationsDetailScreen extends StatefulWidget {
   final String title;
@@ -28,7 +25,6 @@ class _MedicationsDetailScreenState extends State<MedicationsDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // تهيئة المتحكم بالقيمة الحالية المرسلة من الشاشة السابقة
     _controller = TextEditingController(text: widget.currentValueString == 'None' ? '' : widget.currentValueString);
   }
 
@@ -38,18 +34,14 @@ class _MedicationsDetailScreenState extends State<MedicationsDetailScreen> {
     super.dispose();
   }
 
-  // دالة لحفظ البيانات والعودة إلى الشاشة السابقة
   void _saveAndReturn() {
     String newValue = _controller.text.trim();
-    // إذا كانت القيمة فارغة بعد الإزالة/التعديل، نعيدها 'None'
     if (newValue.isEmpty) {
       newValue = 'None';
     }
-    // إرجاع القيمة الجديدة للشاشة السابقة
     Navigator.of(context).pop(newValue);
   }
 
-  // دالة للعودة دون حفظ (إرجاع القيمة الأصلية)
   void _cancelAndReturn() {
     Navigator.of(context).pop(widget.currentValueString);
   }
@@ -57,14 +49,12 @@ class _MedicationsDetailScreenState extends State<MedicationsDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Radius
     const double boxRadius = 24.0;
     const double buttonRadius = 25.0;
 
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
-        // عرض العنوان المرسل (سواء "Medications" أو "Chronic Diseases")
         title: Text(
           widget.title,
           style: const TextStyle(color: onBackground, fontWeight: FontWeight.bold),
@@ -81,7 +71,6 @@ class _MedicationsDetailScreenState extends State<MedicationsDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            // 1. حقل النص للإدخال/التعديل
             Container(
               decoration: BoxDecoration(
                 color: inputSurfaceColor,
@@ -103,10 +92,8 @@ class _MedicationsDetailScreenState extends State<MedicationsDetailScreen> {
 
             const SizedBox(height: 16),
 
-            // 2. زر الحفظ (Save)
             GestureDetector(
               onTap: _saveAndReturn,
-              // يمكن إضافة منطق onDoubleTap هنا للمستخدم الكفيف
               child: Container(
                 height: 65,
                 width: double.infinity,
@@ -128,11 +115,9 @@ class _MedicationsDetailScreenState extends State<MedicationsDetailScreen> {
 
             const SizedBox(height: 20),
 
-            // 3. زر الحذف (Clear) - اختياري
             GestureDetector(
               onTap: () {
                 _controller.clear();
-                // يمكن إضافة نطق صوتي هنا
               },
               child: Container(
                 height: 65,

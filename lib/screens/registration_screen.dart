@@ -6,20 +6,16 @@ import 'package:flutter/services.dart';
 import '../models/user_profile.dart';
 import '../services/ble_controller.dart';
 import 'dart:async';
-// Navigation Target (Biometrics) - REMOVED
-// import 'local_auth_screen.dart';
-import 'allergies_detail_screen.dart'; // Allergies Screen
-import 'medications_detail_screen.dart'; // Medications & Diseases Screen
-import 'sign_up_screen.dart'; // Sign Up Screen for navigation
-import 'main_chat_screen.dart'; // <<<--- [تم التعديل] استخدام مسار '../' للوصول للمجلد الأب (lib/).
+import 'allergies_detail_screen.dart';
+import 'medications_detail_screen.dart';
+import 'sign_up_screen.dart';
+import 'main_chat_screen.dart';
 
-// Custom Colors (Based on Figma image_a4505a.png)
-const Color accentColor = Color(0xFFFFB267); // The bright orange/accent color from Figma border (#FFB267)
-const Color darkBackground = Color(0xFF1B1B1B); // Very Dark Background
-const Color inputSurfaceColor = Color(0x992B2B2B); // Field background: #2B2B2B at 60% opacity (0x99 = 60% of 0xFF)
-const Color onBackground = Color(0xFFF8F8F8); // White text (for titles and main content)
+const Color accentColor = Color(0xFFFFB267);
+const Color darkBackground = Color(0xFF1B1B1B);
+const Color inputSurfaceColor = Color(0x992B2B2B);
+const Color onBackground = Color(0xFFF8F8F8);
 
-// Define fields
 enum MedicalField {
   sex,
   bloodType,
@@ -227,7 +223,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
       if (_isSexDropdownOpen) {
         _speakInstruction('Sex dropdown opened. Select manually or long-press for voice input.');
       } else if (_selectedSex.isNotEmpty) {
-        // If selection was already made, close and move next
         _applyAndMoveToNextField(_selectedSex);
       } else {
         _speakInstruction('Sex dropdown closed. Please select or use voice input.');
@@ -245,7 +240,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
       if (_isBloodTypeDropdownOpen) {
         _speakInstruction('Blood type dropdown opened. Select manually or long-press for voice input.');
       } else if (_selectedBloodType.isNotEmpty) {
-        // If selection was already made, close and move next
         _applyAndMoveToNextField(_selectedBloodType);
       } else {
         _speakInstruction('Blood type dropdown closed. Please select or use voice input.');
@@ -322,7 +316,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
     if (field == MedicalField.allergies) {
       result = await Navigator.of(context).push(
         MaterialPageRoute(
-          // 💡 FIX: Use block body for builder to resolve compiler ambiguity
           builder: (context) {
             return AllergiesDetailScreen(
               currentAllergiesString: _selectedAllergies,
@@ -335,7 +328,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
     } else if (field == MedicalField.medications) {
       result = await Navigator.of(context).push(
         MaterialPageRoute(
-          // 💡 FIX: Use block body for builder to resolve compiler ambiguity
           builder: (context) {
             return MedicationsDetailScreen(
               title: 'Medications',
@@ -349,7 +341,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
     } else if (field == MedicalField.diseases) {
       result = await Navigator.of(context).push(
         MaterialPageRoute(
-          // 💡 FIX: Use block body for builder to resolve compiler ambiguity
           builder: (context) {
             return MedicationsDetailScreen(
               title: 'Chronic Diseases',
@@ -362,12 +353,10 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
       if (mounted && result is String) setState(() => _selectedDiseases = result);
     }
 
-    // After returning from the detail screen, apply and move to the next field
     _applyAndMoveToNextField('');
   }
 
 
-  // 💡 التعديل الأساسي هنا: تم تغيير التوجيه من LocalAuthScreen إلى MainScreen وتم إزالة 'const'
   void _saveProfile() async {
     if (_selectedSex.isEmpty || _selectedBloodType.isEmpty) {
       _speakInstruction('Please set Sex and Blood Type before saving. You will be redirected to the Sex field now.');
@@ -399,19 +388,17 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
       _isLoading = false;
     });
 
-    _speakInstruction('Medical profile saved successfully. Navigating to the Main Screen.'); // رسالة موجهة
+    _speakInstruction('Medical profile saved successfully. Navigating to the Main Screen.');
 
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        // [NEW] توجيه إلى شاشة MainScreen وإزالة كلمة 'const'
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => MainChatScreen()), // تم التغيير هنا (إزالة const)
+          MaterialPageRoute(builder: (context) => MainChatScreen()),
         );
       }
     });
   }
 
-  // Helper widget for Sex and Blood Type (Dropdown)
   Widget _buildSelectionBox({
     required String title,
     required String value,
@@ -423,16 +410,13 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
     final displayValue = value.isEmpty || value == 'Not Set' ? '' : value;
     final bool isSex = field == MedicalField.sex;
 
-    // Determine the height of the dropdown list based on the number of options
     final double dropdownHeight = isSex ? (options.length * 48.0) + 16.0 : (options.length * 48.0) + 16.0;
 
-    // Radius and Border
-    const double boxRadius = 24.0; // Adjusted based on Figma
-    final Color valueColor = accentColor.withOpacity(0.9); // Brighter accent for value
-    final Color borderColor = accentColor.withOpacity(0.25); // 25% opacity border
-    const double borderWidth = 1.0; // 1px border width from Figma
+    const double boxRadius = 24.0;
+    final Color valueColor = accentColor.withOpacity(0.9);
+    final Color borderColor = accentColor.withOpacity(0.25);
+    const double borderWidth = 1.0;
 
-    // Reduced vertical padding for smaller height (as requested previously)
     const double verticalPadding = 14;
 
 
@@ -443,18 +427,14 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // The main header/value display area
             Container(
               decoration: BoxDecoration(
-                // استخدام اللون الشفاف للحقل
                 color: inputSurfaceColor,
                 borderRadius: BorderRadius.circular(boxRadius),
-                // استخدام لون التحديد بنسبة 25% شفافية
                 border: Border.all(
                     color: borderColor,
                     width: borderWidth),
               ),
-              // تقليل الـ padding للحصول على ارتفاع أقل
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: verticalPadding),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -470,13 +450,11 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                     children: [
                       Text(
                         displayValue,
-                        // استخدام لون التحديد للقيمة
                         style: TextStyle(
                             color: value.isEmpty || value == 'Not Set' ? onBackground.withOpacity(0.4) : valueColor,
                             fontSize: 18),
                       ),
                       const SizedBox(width: 8),
-                      // استخدام لون التحديد للسهم
                       Icon(
                         Icons.arrow_forward_ios,
                         color: valueColor,
@@ -487,7 +465,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                 ],
               ),
             ),
-            // The Dropdown options list
             if (isDropdownOpen)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
@@ -495,10 +472,8 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                 height: isDropdownOpen ? dropdownHeight : 0,
                 margin: const EdgeInsets.only(top: 8.0),
                 decoration: BoxDecoration(
-                  // استخدام اللون الشفاف للحقل
                   color: inputSurfaceColor,
                   borderRadius: BorderRadius.circular(boxRadius),
-                  // استخدام لون التحديد بنسبة 25% شفافية
                   border: Border.all(color: borderColor, width: borderWidth),
                 ),
                 child: SingleChildScrollView(
@@ -517,7 +492,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                           alignment: Alignment.centerLeft,
                           padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                           decoration: BoxDecoration(
-                            // استخدام لون التحديد بخلفية شفافة للاختيار
                             color: isSelected ? accentColor.withOpacity(0.2) : Colors.transparent,
                             borderRadius: BorderRadius.circular(boxRadius),
                           ),
@@ -525,7 +499,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                             option,
                             style: TextStyle(
                               fontSize: 18,
-                              // لون النص المحدد
                               color: isSelected ? accentColor : onBackground.withOpacity(0.9),
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             ),
@@ -542,24 +515,20 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
     );
   }
 
-  // Helper widget for Allergies, Medications, Diseases (Navigation)
   Widget _buildNavigationBox({
     required String title,
     required String value,
     required MedicalField field,
   }) {
-    // Display value logic: show count if set, otherwise empty string
     final displayValue = value == 'None'
         ? ''
         : (value.contains(',') ? '${value.split(',').length} items set' : 'Set');
 
-    // Radius and Border
-    const double boxRadius = 24.0; // Adjusted based on Figma
-    final Color valueColor = accentColor.withOpacity(0.9); // Brighter accent for value
-    final Color borderColor = accentColor.withOpacity(0.25); // 25% opacity border
-    const double borderWidth = 1.0; // 1px border width from Figma
+    const double boxRadius = 24.0;
+    final Color valueColor = accentColor.withOpacity(0.9);
+    final Color borderColor = accentColor.withOpacity(0.25);
+    const double borderWidth = 1.0;
 
-    // Reduced vertical padding for smaller height (as requested previously)
     const double verticalPadding = 14;
 
     return InkWell(
@@ -567,13 +536,10 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
       onDoubleTap: () => _handleDoubleTap(),
       child: Container(
         margin: const EdgeInsets.only(bottom: 15.0),
-        // تقليل الـ padding للحصول على ارتفاع أقل
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: verticalPadding),
         decoration: BoxDecoration(
-          // استخدام اللون الشفاف للحقل
           color: inputSurfaceColor,
           borderRadius: BorderRadius.circular(boxRadius),
-          // استخدام لون التحديد بنسبة 25% شفافية
           border: Border.all(
               color: borderColor,
               width: borderWidth),
@@ -592,13 +558,12 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
               children: [
                 Text(
                   displayValue,
-                  // استخدام لون التحديد للقيمة
+
                   style: TextStyle(
                       color: value == 'None' ? onBackground.withOpacity(0.4) : valueColor,
                       fontSize: 18),
                 ),
                 const SizedBox(width: 8),
-                // استخدام لون التحديد للسهم
                 Icon(
                   Icons.arrow_forward_ios,
                   color: valueColor,
@@ -612,9 +577,7 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
     );
   }
 
-  // الودجت الخاص بزر "Done" (حفظ)
   Widget _buildDoneButton() {
-    // Radius
     const double buttonRadius = 25.0;
 
     return GestureDetector(
@@ -623,10 +586,8 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
         height: 65,
         width: double.infinity,
         decoration: BoxDecoration(
-          // استخدام لون التحديد الرئيسي للزر
           color: accentColor,
           borderRadius: BorderRadius.circular(buttonRadius),
-          // Removed boxShadow
         ),
         alignment: Alignment.center,
         child: _isLoading
@@ -640,7 +601,7 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: darkBackground, // Dark background color for text on orange button
+            color: darkBackground,
           ),
         ),
       ),
@@ -662,63 +623,54 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
           onLongPressEnd: _onLongPressEnd,
           child: Scaffold(
             backgroundColor: darkBackground,
-            // Custom Header instead of AppBar
             body: Stack(
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Custom Header Section: Sign Up & Medical Profile
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 50.0, 16.0, 0.0), // Padding adjusted for status bar
+                      padding: const EdgeInsets.fromLTRB(16.0, 50.0, 16.0, 0.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Top Row: Back Button and Sign Up Title
                           Row(
                             children: [
-                              // Back Button (Left)
                               IconButton(
                                 icon: const Icon(Icons.arrow_back_ios),
-                                color: onBackground, // White color
+                                color: onBackground,
                                 onPressed: () {
-                                  // 💡 الإصلاح النهائي: التحقق أولاً من إمكانية العودة (pop) لتجنب أخطاء Navigator.
                                   if (Navigator.of(context).canPop()) {
-                                    // إذا كانت شاشة التسجيل موجودة في الخلف، نعود إليها مباشرة.
                                     Navigator.of(context).pop();
                                   } else {
-                                    // إذا لم يكن هناك شيء للعودة إليه، نقوم باستبدال الشاشة الحالية بشاشة التسجيل.
                                     Navigator.of(context).pushReplacement(
                                       MaterialPageRoute(builder: (context) => const SignUpScreen()),
                                     );
                                   }
                                 },
                               ),
-                              // Sign Up Title (Center)
                               Expanded(
                                 child: Center(
                                   child: Text(
-                                    'Sign Up', // Text "Sign Up"
+                                    'Sign Up',
                                     style: TextStyle(
-                                      color: onBackground, // White color #F8F8F8
+                                      color: onBackground,
                                       fontSize: 17,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 48), // مسافة لموازاة زر الرجوع
+                              const SizedBox(width: 48),
                             ],
                           ),
 
                           const SizedBox(height: 12),
 
-                          // Medical Profile Title (Center Alignment)
                           Center(
                             child: Text(
-                              'Medical Profile', // Text "Medical Profile"
+                              'Medical Profile',
                               style: TextStyle(
-                                color: onBackground, // White color #F8F8F8
+                                color: onBackground,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -729,16 +681,13 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                         ],
                       ),
                     ),
-                    // -----------------------------------------------------
 
-                    // Main Content (Fields and Button)
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            // 1. Sex
                             _buildSelectionBox(
                               title: 'Sex',
                               value: _selectedSex,
@@ -748,7 +697,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                               onSelectOption: (sex) => setState(() => _selectedSex = sex),
                             ),
 
-                            // 2. Blood Type
                             _buildSelectionBox(
                               title: 'Blood Type',
                               value: _selectedBloodType,
@@ -758,21 +706,18 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                               onSelectOption: (type) => setState(() => _selectedBloodType = type),
                             ),
 
-                            // 3. Allergies
                             _buildNavigationBox(
                               title: 'Allergies',
                               value: _selectedAllergies,
                               field: MedicalField.allergies,
                             ),
 
-                            // 4. Medications
                             _buildNavigationBox(
                               title: 'Medications',
                               value: _selectedMedications,
                               field: MedicalField.medications,
                             ),
 
-                            // 5. Diseases
                             _buildNavigationBox(
                               title: ' Chronic Diseases',
                               value: _selectedDiseases,
@@ -781,7 +726,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
 
                             const SizedBox(height: 50),
 
-                            // Save Button (Done)
                             _buildDoneButton(),
                             const SizedBox(height: 20),
                           ],
@@ -791,7 +735,6 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
                   ],
                 ),
 
-                // Voice/Loading Overlay
                 if (_isAwaitingInput || bleController.isListening || _isLoading)
                   Container(
                     color: Colors.black.withOpacity(0.8),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../services/ble_controller.dart';
-import '../enums/action_type.dart'; // يتطلب استيراد Enums
+import '../enums/action_type.dart';
 
 class GestureConfigScreen extends StatefulWidget {
   const GestureConfigScreen({super.key});
@@ -24,7 +24,6 @@ class _GestureConfigScreenState extends State<GestureConfigScreen> {
 
   void _initializeSettings() {
     final bleController = Provider.of<BleController>(context, listen: false);
-    // bleController.gestureConfig هي Map<String, ActionType>
     final currentConfig = bleController.gestureConfig;
 
     if (currentConfig.isNotEmpty) {

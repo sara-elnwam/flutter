@@ -6,12 +6,12 @@ import 'gesture_config_screen.dart';
 class BleScanScreen extends StatelessWidget {
   const BleScanScreen({super.key});
   final List<Map<String, String>> mockCommands = const [
-    {"command": "OBSTACLE_FRONT", "label": "عائق أمامي ⚠️"},
-    {"command": "GESTURE_SOS", "label": "إيماءة استغاثة SOS 🚨"},
-    {"command": "OBSTACLE_LEFT", "label": "عائق يساري ⬅️"},
-    {"command": "GESTURE_CALL", "label": "إيماءة اتصال 📞"},
-    {"command": "BATTERY_LOW", "label": "بطارية منخفضة 🔋"},
-    {"command": "SETTINGS_ACK", "label": "تأكيد إعدادات ✅"},
+    {"command": "OBSTACLE_FRONT", "label": "Front Obstacle ️"},
+    {"command": "GESTURE_SOS", "label": "SOS Gesture "},
+    {"command": "OBSTACLE_LEFT", "label": "Left Obstacle ️"},
+    {"command": "GESTURE_CALL", "label": "Call Gesture "},
+    {"command": "BATTERY_LOW", "label": "Low Battery "},
+    {"command": "SETTINGS_ACK", "label": "Settings Acknowledge "},
   ];
 
   Widget _buildScanResultTile(BleController bleController, ScanResult result) {
@@ -27,23 +27,23 @@ class BleScanScreen extends StatelessWidget {
       trailingWidget = const Icon(Icons.check_circle, color: Colors.green);
       onPressedAction = bleController.disconnect;
       buttonColor = Colors.red.shade600;
-      buttonText = 'قطع الاتصال';
+      buttonText = 'Disconnect';
     } else if (isConnecting) {
       trailingWidget = const CircularProgressIndicator();
       onPressedAction = null;
       buttonColor = Colors.orange.shade600;
-      buttonText = 'جارٍ الاتصال...';
+      buttonText = 'Connecting...';
     } else {
       trailingWidget = const Icon(Icons.link, color: Colors.blue);
       onPressedAction = () => bleController.connect(result.device);
       buttonColor = Colors.blue.shade600;
-      buttonText = 'اتصال';
+      buttonText = 'Connect';
     }
 
     return ListTile(
       leading: const Icon(Icons.bluetooth, color: Colors.blue),
       title: Text(result.device.platformName.isEmpty
-          ? 'جهاز غير معروف'
+          ? 'Unknown device'
           : result.device.platformName),
       subtitle: Text(
           'ID: ${result.device.remoteId}\nRSSI: ${result.rssi} dBm'),
@@ -75,7 +75,7 @@ class BleScanScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('شاشة مسح البلوتوث'),
+            title: const Text('Bluetooth Scan Screen'),
             backgroundColor: Colors.teal,
             foregroundColor: Colors.white,
             elevation: 4,
@@ -83,9 +83,9 @@ class BleScanScreen extends StatelessWidget {
               if (isConnected)
                 IconButton(
                   icon: const Icon(Icons.settings),
-                  tooltip: 'إعدادات الإيماءات',
+                  tooltip: 'Gesture Settings',
                   onPressed: () {
-                    bleController.speak("الانتقال إلى شاشة تكوين الإيماءات.");
+                    bleController.speak("Navigating to gesture configuration screen.");
                     Navigator.of(context).push(
                       MaterialPageRoute(
                           builder: (context) => const GestureConfigScreen()),
@@ -94,7 +94,7 @@ class BleScanScreen extends StatelessWidget {
                 ),
               IconButton(
                 icon: Icon(isScanning ? Icons.stop : Icons.search),
-                tooltip: isScanning ? 'إيقاف المسح' : 'بدء المسح',
+                tooltip: isScanning ? 'Stop Scanning' : 'Start Scanning',
                 onPressed: isScanning
                     ? bleController.stopScan
                     : bleController.startScan,
@@ -108,8 +108,8 @@ class BleScanScreen extends StatelessWidget {
                     ? Center(
                   child: Text(
                     isScanning
-                        ? 'جارٍ البحث عن أجهزة...'
-                        : 'لا توجد أجهزة بلوتوث متاحة حاليًا.\nاضغط على أيقونة البحث للمسح.',
+                        ? 'Searching for devices...'
+                        : 'No Bluetooth devices currently available.\nPress the search icon to scan.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
@@ -132,7 +132,7 @@ class BleScanScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'أوامر محاكاة الاستقبال (للاختبار):',
+                        'Mock Reception Commands (for testing):',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.teal),
                       ),
                       const SizedBox(height: 8),
@@ -162,12 +162,12 @@ class BleScanScreen extends StatelessWidget {
                 color: isConnected ? Colors.green.shade100 : Colors.red.shade100,
                 child: Semantics(
                   label:
-                  'حالة الاتصال والبيانات المستلمة: ${isConnected ? "متصل بالجهاز" : "منفصل"}. ${bleController.receivedDataMessage}',
+                  'Connection status and received data: ${isConnected ? "Connected to device" : "Disconnected"}. ${bleController.receivedDataMessage}',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'حالة النظام: ${isConnected ? "متصل (جهاز جاهز للعمل)" : "منفصل (اضغط مسح أو اتصال)"}',
+                        'System Status: ${isConnected ? "Connected (Device Ready)" : "Disconnected (Press scan or connect)"}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

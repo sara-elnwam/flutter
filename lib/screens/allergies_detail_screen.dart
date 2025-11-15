@@ -1,44 +1,34 @@
-// allergies_detail_screen.dart (الكود النهائي - مطابق للتصميم الأخير)
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/ble_controller.dart';
 import 'dart:async';
 
-// Custom Colors (Matching the provided dark theme images)
-const Color neonColor = Color(0xFFF39560); // Orange Accent (اللون البرتقالي المطفي)
-const Color darkSurface = Color(0xFF333333); // Dark Grey Surface (لصناديق الأقسام)
-const Color darkBackground = Color(0xFF1B1B1B); // Very Dark Background
-const Color onBackground = Colors.white; // White text (النص الأبيض الواضح)
-const Color lightGreyText = Color(0xFFCCCCCC); // Light grey text color (الرمادي المطفي)
-
-// Structured list of allergies (تم التعديل هنا ليتطابق مع الصورة تمامًا)
+const Color neonColor = Color(0xFFF39560);
+const Color darkSurface = Color(0xFF333333);
+const Color darkBackground = Color(0xFF1B1B1B);
+const Color onBackground = Colors.white;
+const Color lightGreyText = Color(0xFFCCCCCC);
 const Map<String, List<String>> structuredAllergies = {
-  // Food Allergens - تم ترتيبها لتظهر في 3 أعمدة ثم تنتقل لسطر جديد
   'Food Allergens': [
     'Peanut', 'Milk / Dairy', 'Egg',
-    'Soybean', 'Wheat / Gluten', 'Other Food', // 'Other' في الصف الأول
-    'Shellfish', 'Fish', // هذان في الصف الثالث
+    'Soybean', 'Wheat / Gluten', 'Other Food',
+    'Shellfish', 'Fish',
   ],
-  // Animal / Pet Allergens - تم ترتيبها لتظهر في 2 عمود ثم تنتقل لسطر جديد
   'Animal / Pet Allergens': [
     'Cat Dander', 'Dog Dander',
     'Rodent', 'Other Pet',
   ],
-  // Medication / Venom Allergens - تم ترتيبها لتظهر في 2 عمود ثم تنتقل لسطر جديد
   'Medication / Venom Allergens': [
     'Antibiotics', 'Anesthetics',
     'Insect Sting Venom', 'NSAIDs',
     'Other Medication',
   ],
-  // Environmental Allergens - تم ترتيبها لتظهر في 3 أعمدة ثم تنتقل لسطر جديد
   'Environmental Allergens': [
     'Pollen', 'Dust Mites', 'Mold',
-    'Cockroach', 'Smoke / Fumes', 'Other Env', // 'Other' في الصف الثاني
+    'Cockroach', 'Smoke / Fumes', 'Other Env',
   ],
 };
 
-// Unified list for voice command processing
 const List<String> allAllergyNames = [
   'Peanut', 'Milk / Dairy', 'Egg', 'Soybean', 'Wheat / Gluten', 'Other Food',
   'Shellfish', 'Fish', 'Cat Dander', 'Dog Dander', 'Rodent', 'Other Pet',
@@ -60,7 +50,6 @@ class AllergiesDetailScreen extends StatefulWidget {
 }
 
 class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
-  // Set of selected allergies
   final Set<String> _selectedAllergies = {};
 
   bool _isAwaitingInput = false;
@@ -71,34 +60,28 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
   Timer? _tapResetTimer;
   final Duration _tapTimeout = const Duration(milliseconds: 600);
 
-  // Current field/item being focused on for voice navigation (for example 0 is Food Allergens)
-  int _currentField = 0; // -1 means done button, 0-3 are sections
+  int _currentField = 0;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with current value
     if (widget.currentAllergiesString != 'None' && widget.currentAllergiesString.isNotEmpty) {
       _selectedAllergies.addAll(widget.currentAllergiesString.split(', '));
     }
 
-    // Initialize _bleController
     _bleController = Provider.of<BleController>(context, listen: false);
 
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
-      // TTS Instruction (English only)
       _speak('Screen for Allergies. Current selection: ${_selectedAllergies.isEmpty ? 'None' : _selectedAllergies.join(', ')}. Double-tap to confirm and save. Triple-tap to move to the next section.');
     });
   }
 
-  // Helper functions for TTS
   void _speak(String text) {
     if (!mounted) return;
     _bleController.speak(text);
   }
 
-  // Toggles the selection of an allergy item
   void _toggleSelection(String allergy) {
     setState(() {
       if (_selectedAllergies.contains(allergy)) {
@@ -111,7 +94,6 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
     });
   }
 
-  // Voice recognition handler
   void _onLongPressStart() {
     if (_isAwaitingInput || _bleController.isListening) return;
 
@@ -138,16 +120,13 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
 
           final spokenWord = spokenText.trim();
 
-          // Get the list of possible items for the current section
           final currentItems = structuredAllergies[currentSection]!;
 
-          // Find the best match
           final matchedItem = _findBestMatch(spokenWord, currentItems);
 
           if (matchedItem != null) {
             _toggleSelection(matchedItem);
           } else {
-            // TTS Instruction (English only)
             _speak('Could not find a match for $spokenText in the current section. Please try again.');
           }
         }
@@ -161,11 +140,9 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
     }
   }
 
-  // Simple matching function (can be improved with fuzzy search)
   String? _findBestMatch(String spokenText, List<String> possibleMatches) {
     final lowerSpoken = spokenText.toLowerCase();
     for (var item in possibleMatches) {
-      // Check for exact word matches or close containment (case-insensitive)
       if (item.toLowerCase().contains(lowerSpoken) || lowerSpoken.contains(item.toLowerCase())) {
         return item;
       }
@@ -173,7 +150,6 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
     return null;
   }
 
-  // Gesture Handlers
   void _handleScreenTap() {
     _tapCount++;
     _tapResetTimer?.cancel();
@@ -211,12 +187,9 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
       return;
     }
 
-    // If on Done button, save
     if (_currentField == -1) {
       _saveAndReturn();
     } else {
-      // If on a section, toggle between the items within the section (or simply speak the current status)
-      // Since the interaction is primarily voice-based via long press, double-tap here mainly serves as a feedback mechanism or simple navigation
       _speakCurrentFocus();
     }
   }
@@ -226,13 +199,11 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
 
     setState(() {
       if (_currentField == -1) {
-        // From Done, go back to the first section (Food Allergens)
         _currentField = 0;
       } else {
-        // Move to the next section or to the Done button
         _currentField = (_currentField + 1) % (structuredAllergies.length + 1);
         if (_currentField == structuredAllergies.length) {
-          _currentField = -1; // Move to Done button
+          _currentField = -1;
         }
       }
     });
@@ -242,7 +213,6 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
 
   void _saveAndReturn() {
     final resultString = _selectedAllergies.isEmpty ? 'None' : _selectedAllergies.join(', ');
-    // TTS Instruction (English only)
     _speak('Allergies saved. Returning to profile.');
     Navigator.of(context).pop(resultString);
   }
@@ -266,29 +236,27 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Medical Profile Title (أبيض - في المنتصف)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 5.0),
                     child: Text(
                       'Medical Profile',
-                      textAlign: TextAlign.center, // تم التوسيط
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 30, // حجم أكبر
-                          fontWeight: FontWeight.bold, // أكثر سمكًا
-                          color: onBackground // اللون الأبيض النقي
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: onBackground
                       ),
                     ),
                   ),
-                  // Allergies Subtitle (رمادي مطفي - في المنتصف)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 30.0),
                     child: Text(
                       'Allergies',
-                      textAlign: TextAlign.center, // تم التوسيط
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 20, // حجم أصغر
-                          fontWeight: FontWeight.w300, // خط أرق
-                          color: lightGreyText), // اللون الرمادي المطفي
+                          fontSize: 20,
+                          fontWeight: FontWeight.w300,
+                          color: lightGreyText),
                     ),
                   ),
 
@@ -303,10 +271,9 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
                       decoration: BoxDecoration(
                         color: darkSurface,
                         borderRadius: BorderRadius.circular(20.0),
-                        // الحدود البرتقالية مطفأة وثابتة السمك
                         border: Border.all(
-                            color: neonColor.withOpacity(0.6), // مطفأة دائمًا
-                            width: 1), // سُمك ثابت
+                            color: neonColor.withOpacity(0.6),
+                            width: 1),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,14 +285,13 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                // أسماء الأقسام باللون الرمادي المطفي
                                 color: lightGreyText,
                               ),
                             ),
                           ),
                           Wrap(
-                            spacing: 20.0, // التباعد الأفقي
-                            runSpacing: 15.0, // التباعد العمودي
+                            spacing: 20.0,
+                            runSpacing: 15.0,
                             children: sectionItems.map((allergy) {
                               final isSelected = _selectedAllergies.contains(allergy);
                               return GestureDetector(
@@ -353,7 +319,6 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
                                       allergy.replaceAll(' / ', '/'),
                                       style: const TextStyle(
                                         fontSize: 16,
-                                        // نص الحساسيات مطفأ
                                         color: lightGreyText,
                                       ),
                                     ),
@@ -370,7 +335,6 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
               ),
             ),
 
-            // Floating Done Button at the bottom
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -381,7 +345,7 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
                     height: 65,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: neonColor, // لون زر Done بالبرتقالي المطفي
+                      color: neonColor,
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                     alignment: Alignment.center,
@@ -399,7 +363,6 @@ class _AllergiesDetailScreenState extends State<AllergiesDetailScreen> {
             ),
 
 
-            // Voice/Listening Overlay
             if (_isAwaitingInput || isListening)
               Container(
                 color: Colors.black.withOpacity(0.8),

@@ -1,5 +1,3 @@
-// action_type.dart (VERIFIED)
-
 enum Gesture { shake_twice, tap_three_times, long_press }
 enum ActionType { sos_emergency, send_location, call_contact, disable_feature } // تم تخمين هذه الإجراءات
 
@@ -7,11 +5,11 @@ extension GestureExtension on Gesture {
   String get displayName {
     switch (this) {
       case Gesture.shake_twice:
-        return 'هز الجهاز مرتين';
+        return 'Shake the device twice';
       case Gesture.tap_three_times:
-        return 'الضغط ثلاث مرات';
+        return 'Tap three times';
       case Gesture.long_press:
-        return 'الضغط المطول';
+        return 'Long press';
     }
   }
 
@@ -22,13 +20,13 @@ extension ActionTypeExtension on ActionType {
   String get displayName {
     switch (this) {
       case ActionType.sos_emergency:
-        return 'نداء استغاثة (SOS)';
+        return 'SOS Emergency Call';
       case ActionType.send_location:
-        return 'إرسال الموقع الجغرافي';
+        return 'Send geographic location';
       case ActionType.call_contact:
-        return 'الاتصال برقم الطوارئ';
+        return 'Call emergency contact';
       case ActionType.disable_feature:
-        return 'تعطيل الميزة (إيقاف)';
+        return 'Disable feature (Stop)';
     }
   }
 
